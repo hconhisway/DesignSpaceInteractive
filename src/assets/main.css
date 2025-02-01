@@ -25,6 +25,17 @@ body {
   display: flex;
   place-items: center;
 }
+
+.clickable-area {
+  transition: fill 0.4s;
+  cursor: pointer;
+  /* border-radius: 5px; */
+}
+
+.clickable-area:hover {
+  fill: hsla(160, 100%, 37%, 0.2);
+}
+
 /* @media (min-width: 1024px) {
   body {
     display: flex;
