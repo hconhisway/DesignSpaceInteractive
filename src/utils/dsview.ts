@@ -1,6 +1,6 @@
 import * as d3 from "d3";
-import dstreeData from '../assets/dstree.json';
 import { flextree } from "d3-flextree";
+import dstreeData from '../assets/dstree.json';
 import orsvg from '../assets/or.svg';
 import andsvg from '../assets/and.svg';
 import equalsvg from '../assets/equal.svg';
@@ -17,9 +17,7 @@ interface DSTreeNode {
 }
 
 /**
- * 确保每个节点都有 collapsed 属性（默认 false）
- * 如果原始数据中没有该属性，则赋予默认值 false，
- * 这样在第一次渲染时所有节点都展开。
+ * 确保每个节点都有 collapsed 属性（如果没有则赋默认值 false）
  */
 function ensureCollapsedState(data: DSTreeNode): void {
   if (data.collapsed === undefined) {
@@ -31,16 +29,15 @@ function ensureCollapsedState(data: DSTreeNode): void {
 }
 
 /**
- * 计算每个节点的 wid 属性
- * @param node 当前节点（d3.hierarchy 构造的节点）
- * @param nodeWidth 单个节点宽度（单位宽度）
- * @param nodeHeight 单个节点高度
- * @returns 叶节点的数量
- *
- * 注意：如果节点为叶节点（包括因 collapsed 而无子节点的情况），
- * 则宽度固定为 nodeWidth；否则宽度为所有子节点叶节点数量的和乘以 nodeWidth。
+ * 计算每个节点的 wid 和 size 属性  
+ * 如果节点没有子节点（包括因 collapsed 而“屏蔽”子节点），则宽度固定为 nodeWidth；  
+ * 否则宽度为所有叶子节点数量的和乘以 nodeWidth  
  */
-function calculateWid(node: d3.HierarchyNode<DSTreeNode>, nodeWidth: number, nodeHeight: number): number {
+function calculateWid(
+  node: d3.HierarchyNode<DSTreeNode>,
+  nodeWidth: number,
+  nodeHeight: number
+): number {
   if (!node.children || node.children.length === 0) {
     node.data.wid = 1;
     node.data.size = [nodeWidth, nodeHeight];
@@ -53,185 +50,304 @@ function calculateWid(node: d3.HierarchyNode<DSTreeNode>, nodeWidth: number, nod
 }
 
 /**
- * 读取 dstree 数据并生成层次布局，同时根据节点 collapsed 状态控制布局与渲染：
- *  - collapsed 为 true 的节点视为叶节点，宽度固定为单位宽度，且其子节点不参与布局
- *  - collapsed 为 false 的节点，继续展开其子节点，宽度按叶节点数量计算（与之前一致）
- * @param svgElement 要绘制的 SVG 元素
+ * 采用 D3 data-join 模式渲染树（初始绘制和后续更新都调用 update()）  
+ * - 每个节点放到一个 <g class="node"> 中  
+ * - 父节点与子节点之间的逻辑运算符图标放到 <g class="operators"> 中  
+ * 点击节点时，仅更新相关节点（位置、宽度）并通过 transition 实现动画，而不重绘整个树
  */
-export function drawDSTree(svgElement: SVGElement): void {
-  // 清空之前的内容，防止重复叠加
-  while (svgElement.firstChild) {
-    svgElement.removeChild(svgElement.firstChild);
-  }
-
-  // 确保所有节点都有 collapsed 属性（第一次渲染时赋默认值 false，
-  // 如果节点已被点击修改过，则保留原有状态）
+export function drawDSTree(gElement: SVGGElement): void {
+  // 全局数据保持不变，点击时修改各节点的 collapsed 属性
   ensureCollapsedState(dstreeData as DSTreeNode);
 
-  // 构造层级数据时，根据 collapsed 状态决定是否返回子节点：
-  // 如果 collapsed 为 true，则不返回子节点，节点将被视为叶节点
-  const root: d3.HierarchyNode<DSTreeNode> = d3.hierarchy(dstreeData as DSTreeNode, d => {
-    return d.collapsed ? null : d.children;
-  });
+  // 使用 D3 选择 svg，并创建容器组（后续所有更新均在这些容器内进行）
+  const svg = d3.select(gElement);
+  svg.selectAll("*").remove(); // 清空旧内容
+  const gNodes = svg.append("g").attr("class", "nodes");
+  const gOperators = svg.append("g").attr("class", "operators");
 
+  // 定义一些常量参数
   const nodeWidth = 100;
   const nodeHeight = 42;
+  const padding = 5;
+  const smallBarHeight = 10;
+  const arrowSize = 5;
+  const textPadding = 7;
+  const transitionDuration = 500;
 
-  // 先计算每个节点的 wid 和 size
-  calculateWid(root, nodeWidth, nodeHeight);
+  // update 函数：计算新布局并更新节点和逻辑运算符图标的显示位置
+  function update() {
+    // 构造层次数据：若 collapsed 为 true，则不返回子节点
+    const root = d3.hierarchy(dstreeData as DSTreeNode, d => d.collapsed ? null : d.children);
+    calculateWid(root, nodeWidth, nodeHeight);
+    const treeLayout = flextree<DSTreeNode>({});
+    const treeData = treeLayout(root);
 
-  // 生成 flextree 布局
-  const treeLayout = flextree<DSTreeNode>({});
-  const treeData = treeLayout(root);
+    // 计算所有节点的全局坐标偏移（保证所有图形均正显示在视图中）
+    const minX = d3.min(treeData.descendants(), d => d.x)! - nodeWidth;
+    const minY = d3.min(treeData.descendants(), d => d.y)! - nodeHeight;
 
-  // 计算所有节点 x 与 y 坐标的最小值，用于后续平移坐标
-  const minX = Math.min(...treeData.descendants().map(d => d.x)) - nodeWidth;
-  const minY = Math.min(...treeData.descendants().map(d => d.y)) - nodeHeight;
+    // =================== 处理节点 ===================
+    const nodes = treeData.descendants();
 
-  // 遍历所有节点进行绘制
-  treeData.descendants().forEach((d) => {
-    // 根据节点 size 计算当前节点的宽度以及左上角坐标
-    const width = d.data.size ? d.data.size[0] : nodeWidth;
-    const x = d.x - minX - width / 2;
-    const y = d.y - minY;
+    // 用节点的 name 作为 key（假设唯一），完成 data-join
+    const nodeSelection = gNodes.selectAll<SVGGElement, d3.HierarchyPointNode<DSTreeNode>>(".node")
+      .data(nodes, d => d.data.name);
 
-    const padding = 5;
-    const smallBarHeight = 10;
-    const arrowSize = 5;
-    const textPadding = 7;
+    // ENTER：对于新进入的节点，创建 <g class="node"> 并绘制内部各图形
+    const nodeEnter = nodeSelection.enter()
+      .append("g")
+      .attr("class", "node")
+      // 初始位置设为计算好的新位置（也可以用父节点位置实现渐入效果）
+      .attr("transform", d => {
+        const width = d.data.size ? d.data.size[0] : nodeWidth;
+        // 这里设 group 原点为全局坐标 (d.x - minX, d.y - minY)
+        return `translate(${d.x - minX},${d.y - minY})`;
+      });
 
-    // 绘制顶部横线和两侧短竖线
-    const topLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    const topLineData = `
-      M ${x + padding} ${y} H ${x - padding + width} 
-      M ${x + padding} ${y} V ${y + smallBarHeight} 
-      M ${x - padding + width} ${y} V ${y + smallBarHeight}
-    `;
-    topLine.setAttribute('d', topLineData);
-    topLine.setAttribute('stroke', 'black');
-    topLine.setAttribute('fill', 'none');
-    svgElement.appendChild(topLine);
+    nodeEnter.each(function(d) {
+      const g = d3.select(this);
+      // 节点宽度（可能因 collapsed 而为单位宽度）
+      const width = d.data.size ? d.data.size[0] : nodeWidth;
 
-    // 如果有子节点，则绘制左右虚线及箭头
-    if (d.children && d.children.length > 0) {
-      const leftLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      const leftLineData = `
-        M ${x + padding} ${y + smallBarHeight} V ${y + nodeHeight} 
-        M ${x + padding} ${y + nodeHeight} l -${arrowSize} -${arrowSize} 
-        M ${x + padding} ${y + nodeHeight} l ${arrowSize} -${arrowSize}
-      `;
-      leftLine.setAttribute('d', leftLineData);
-      leftLine.setAttribute('stroke', 'lightgray');
-      leftLine.setAttribute('fill', 'none');
-      leftLine.setAttribute('stroke-dasharray', '5,5');
-      svgElement.appendChild(leftLine);
+      // 为了方便后续动画，内部所有图形均以节点中心为参照。
+      // 由于之前全局位置设为 (d.x - minX, d.y - minY)，
+      // 为使节点内容水平居中，内部 x 坐标统一偏移 -width/2 。
+      const offsetX = -width / 2;
 
-      const rightLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      const rightLineData = `
-        M ${x + width - padding} ${y + smallBarHeight} V ${y + nodeHeight} 
-        M ${x + width - padding} ${y + nodeHeight} l ${arrowSize} -${arrowSize} 
-        M ${x + width - padding} ${y + nodeHeight} l -${arrowSize} -${arrowSize}
-      `;
-      rightLine.setAttribute('d', rightLineData);
-      rightLine.setAttribute('stroke', 'lightgray');
-      rightLine.setAttribute('fill', 'none');
-      rightLine.setAttribute('stroke-dasharray', '5,5');
-      svgElement.appendChild(rightLine);
-    }
+      // 1. 顶部横线和两侧短竖线
+      g.append("path")
+        .attr("class", "top-line")
+        .attr("d", `
+          M ${offsetX + padding} 0 H ${offsetX + width - padding}
+          M ${offsetX + padding} 0 V ${smallBarHeight}
+          M ${offsetX + width - padding} 0 V ${smallBarHeight}
+        `)
+        .attr("stroke-width", d.data.collapsed ? 3 : 1)
+        .attr("stroke", "black")
+        .attr("fill", "none");
 
-    // 绘制节点文本
-    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    // 使文本居中：x 坐标取 d.x - minX
-    text.setAttribute('x', (d.x - minX).toString());
-    // y 坐标在节点上半部分，用 textPadding 调整
-    text.setAttribute('y', (d.y - minY - nodeHeight / 2 + textPadding).toString());
-    text.setAttribute('dominant-baseline', 'middle');
-    text.setAttribute('text-anchor', 'middle');
-    text.textContent = d.data.name;
-    svgElement.appendChild(text);
+      // 2. 如果存在子节点，则绘制左右带箭头的虚线
+      if (d.children && d.children.length > 0) {
+        g.append("path")
+          .attr("class", "left-line")
+          .attr("d", `
+            M ${offsetX + padding} ${smallBarHeight} V ${nodeHeight}
+            M ${offsetX + padding} ${nodeHeight} l -${arrowSize} -${arrowSize}
+            M ${offsetX + padding} ${nodeHeight} l ${arrowSize} -${arrowSize}
+          `)
+          .attr("stroke", "lightgray")
+          .attr("fill", "none")
+          .attr("stroke-dasharray", "5,5");
 
-    // 如果文本过长，则缩放文本
-    const textLength = text.getBBox().width;
-    if (textLength > width * 0.75) {
-      const scale = (width * 0.75) / textLength;
-      text.setAttribute('transform', `scale(${scale})`);
-      text.setAttribute('transform-origin', `${d.x - minX} ${(d.y - minY - nodeHeight / 2)}`);
-    }
-
-    // 绘制条件图标（如 EQUAL/LESS），置于节点顶部（如有）
-    if (d.data.sum !== 'None') {
-      let imageURL = '';
-      if (d.data.sum === 'EQUAL') {
-        imageURL = equalsvg;
-      } else if (d.data.sum === 'LESS') {
-        imageURL = lesssvg;
+        g.append("path")
+          .attr("class", "right-line")
+          .attr("d", `
+            M ${offsetX + width - padding} ${smallBarHeight} V ${nodeHeight}
+            M ${offsetX + width - padding} ${nodeHeight} l ${arrowSize} -${arrowSize}
+            M ${offsetX + width - padding} ${nodeHeight} l -${arrowSize} -${arrowSize}
+          `)
+          .attr("stroke", "lightgray")
+          .attr("fill", "none")
+          .attr("stroke-dasharray", "5,5");
       }
-      const imgWidth = 40;
-      const imgHeight = 20;
-      const imageEl = document.createElementNS('http://www.w3.org/2000/svg', 'image');
-      imageEl.setAttribute('href', imageURL);
-      imageEl.setAttribute('x', (d.x - minX - imgWidth / 2).toString());
-      imageEl.setAttribute('y', (d.y - minY - 2.7).toString());
-      imageEl.setAttribute('width', imgWidth.toString());
-      imageEl.setAttribute('height', imgHeight.toString());
-      svgElement.appendChild(imageEl);
-    }
 
-    // 绘制逻辑运算符图标（AND/OR）在子节点之间（如有）
-    if (d.children && d.children.length > 1 && d.data.logicalOperators && d.data.logicalOperators.length > 0) {
-      const operatorCount = Math.min(d.children.length - 1, d.data.logicalOperators.length);
-      for (let i = 0; i < operatorCount; i++) {
-        const child1 = d.children[i];
-        const child2 = d.children[i + 1];
-        const width1 = child1.data.size ? child1.data.size[0] : nodeWidth;
-        const width2 = child2.data.size ? child2.data.size[0] : nodeWidth;
-        // 计算两个子节点中心 x 坐标的中点
-        const midX = ((child1.x - minX + width1 / 2) + (child2.x - minX - width2 / 2)) / 2;
-        // 运算符图标与父节点文字处于同一水平线
-        const operatorY = d.y - minY + nodeHeight / 2 + textPadding;
+      // 3. 节点文本，按原来逻辑在节点上方显示
+      g.append("text")
+        .attr("class", "node-text")
+        .attr("x", 0)
+        // 文本 y 坐标相对于全局位置（0 表示当前组原点）再向上偏移 nodeHeight/2 后加 textPadding
+        .attr("y", -nodeHeight / 2 + textPadding)
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "middle")
+        .text(d.data.name)
+        .each(function() {
+          const text = this as SVGTextElement;
+          const textLength = text.getBBox().width;
+          if (textLength > width * 0.75) {
+            const scale = (width * 0.75) / textLength;
+            text.setAttribute('transform', `scale(${scale})`);
+            // text.setAttribute('transform-origin', `${d.x - minX} ${(d.y - minY - nodeHeight / 2)}`);
+          }
+        });
 
-        const operatorType = d.data.logicalOperators[i];
+      // 4. 如果有条件（EQUAL/LESS），则显示图标（放在节点上方）
+      if (d.data.sum !== 'None') {
         let imageURL = '';
-        if (operatorType === 'AND') {
-          imageURL = andsvg;
-        } else if (operatorType === 'OR') {
-          imageURL = orsvg;
-        } else {
-          // 若遇到其他值，可按需处理；这里直接跳过
-          continue;
+        if (d.data.sum === 'EQUAL') {
+          imageURL = equalsvg;
+        } else if (d.data.sum === 'LESS') {
+          imageURL = lesssvg;
         }
-
-        const imgWidth = 20;
-        const imgHeight = 20;
-        const imageEl = document.createElementNS('http://www.w3.org/2000/svg', 'image');
-        imageEl.setAttribute('href', imageURL);
-        // 使图标中心位于 (midX, operatorY)
-        imageEl.setAttribute('x', (midX - imgWidth / 2).toString());
-        imageEl.setAttribute('y', (operatorY - imgHeight / 2).toString());
-        imageEl.setAttribute('width', imgWidth.toString());
-        imageEl.setAttribute('height', imgHeight.toString());
-        svgElement.appendChild(imageEl);
+        const imgWidth = 40, imgHeight = 20;
+        g.append("image")
+          .attr("class", "sum-image")
+          .attr("href", imageURL)
+          .attr("x", -imgWidth / 2)
+          .attr("y", +imgHeight / 2 - 12.5)
+          .attr("width", imgWidth)
+          .attr("height", imgHeight);
       }
-    }
+      // 5. 在节点上方添加一个透明矩形作为点击区域，点击时切换 collapsed 状态
+      if (d.data.children && d.data.children.length > 0) {
+        g.append("rect")
+        .attr("class", "clickable-area")
+        .attr("x", offsetX + padding)
+        .attr("y", 0)
+        .attr("width", width - 2 * padding)
+        .attr("height", smallBarHeight + 10)
+        .attr("fill", "transparent")
+        .style("cursor", "pointer")
+        .on("click", function(event) {
+          // 阻止冒泡（如果有嵌套事件）
+          event.stopPropagation();
+          // 切换当前节点的 collapsed 状态
+          d.data.collapsed = !d.data.collapsed;
+          update(); // 更新布局和过渡动画
+        });
+      }
+      
 
-    // 创建一个透明的点击区域，用于切换 collapsed 状态
-    const clickableArea = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    clickableArea.setAttribute('x', (x + padding).toString());
-    clickableArea.setAttribute('y', (y - 5).toString());
-    clickableArea.setAttribute('width', (width - 2 * padding).toString());
-    clickableArea.setAttribute('height', (smallBarHeight + 10).toString());
-    clickableArea.setAttribute('fill', 'transparent');
-    clickableArea.setAttribute('class', 'clickable-area');
-    clickableArea.setAttribute('rx', '5');
-    clickableArea.setAttribute('ry', '5');
-    svgElement.appendChild(clickableArea);
-
-    // 点击时切换 collapsed 状态，并重新绘制整个树
-    clickableArea.addEventListener('click', () => {
-      d.data.collapsed = !d.data.collapsed;
-      drawDSTree(svgElement);
     });
-  });
 
-  console.log(treeData);
+      // UPDATE：对已有节点进行过渡更新
+      nodeSelection.transition()
+      .duration(transitionDuration)
+      .attr("transform", d => {
+        const width = d.data.size ? d.data.size[0] : nodeWidth;
+        return `translate(${d.x - minX},${d.y - minY})`;
+      })
+      .each(function(d) {
+        const g = d3.select(this);
+        const width = d.data.size ? d.data.size[0] : nodeWidth;
+        const offsetX = -width / 2;
+        const newD = `
+          M ${offsetX + padding} 0 H ${offsetX + width - padding}
+          M ${offsetX + padding} 0 V ${smallBarHeight}
+          M ${offsetX + width - padding} 0 V ${smallBarHeight}
+        `;
+        // 对 top-line 单独创建 transition，实现 d 属性的插值动画和粗细变化
+        g.select(".top-line")
+          .transition()
+          .duration(transitionDuration)
+          .attrTween("d", function() {
+            const pathElement = this as SVGPathElement;
+            const previous = pathElement.getAttribute("d") ?? "";
+            return d3.interpolateString(previous, newD);
+          })
+          .attr("stroke-width", d.data.collapsed ? 3 : 1);
+    
+        // 更新点击区域尺寸和位置
+        g.select(".clickable-area")
+          .attr("x", offsetX + padding)
+          .attr("width", width - 2 * padding);
+    
+        // 根据 collapsed 状态处理左右竖线
+        if (!d.data.collapsed && d.children && d.children.length > 0) {
+          g.select(".left-line")
+            .attr("d", `
+              M ${offsetX + padding} ${smallBarHeight} V ${nodeHeight}
+              M ${offsetX + padding} ${nodeHeight} l -${arrowSize} -${arrowSize}
+              M ${offsetX + padding} ${nodeHeight} l ${arrowSize} -${arrowSize}
+            `);
+          g.select(".right-line")
+            .attr("d", `
+              M ${offsetX + width - padding} ${smallBarHeight} V ${nodeHeight}
+              M ${offsetX + width - padding} ${nodeHeight} l ${arrowSize} -${arrowSize}
+              M ${offsetX + width - padding} ${nodeHeight} l -${arrowSize} -${arrowSize}
+            `);
+        } else {
+          // 折叠时，删除左右竖线
+          g.select(".left-line").attr("d", null);
+          g.select(".right-line").attr("d", null);
+        }
+    
+        // 更新节点文本缩放
+        g.select(".node-text")
+          .each(function() {
+            const text = this as SVGTextElement;
+            text.removeAttribute('transform');
+            const textLength = text.getBBox().width;
+            if (textLength > width * 0.75) {
+              const scale = (width * 0.75) / textLength;
+              text.setAttribute('transform', `scale(${scale})`);
+            }
+          });
+      });
+
+    // EXIT：对需要移除的节点淡出后删除
+    nodeSelection.exit()
+      .transition()
+      .duration(transitionDuration)
+      .style("opacity", 0)
+      .remove();
+
+    // =================== 处理逻辑运算符图标 ===================
+    // 对于每个有多个子节点且 data.logicalOperators 有定义的父节点，
+    // 根据子节点中心位置计算运算符图标的全局坐标。
+    let operatorsData: {
+      key: string;
+      operator: string;
+      x: number;
+      y: number;
+    }[] = [];
+    nodes.forEach(d => {
+      if (d.children && d.children.length > 1 && d.data.logicalOperators && d.data.logicalOperators.length > 0) {
+        const operatorCount = Math.min(d.children.length - 1, d.data.logicalOperators.length);
+        for (let i = 0; i < operatorCount; i++) {
+          const child1 = d.children[i];
+          const child2 = d.children[i + 1];
+          const width1 = child1.data.size ? child1.data.size[0] : nodeWidth;
+          const width2 = child2.data.size ? child2.data.size[0] : nodeWidth;
+          // 根据之前的逻辑计算两个子节点中心的中点（全局坐标）
+          const midX = ((child1.x - minX + width1 / 2) + (child2.x - minX - width2 / 2)) / 2;
+          const operatorY = d.y - minY + nodeHeight / 2 + textPadding;
+          operatorsData.push({
+            key: d.data.name + "_" + i,
+            operator: d.data.logicalOperators[i],
+            x: midX,
+            y: operatorY
+          });
+        }
+      }
+    });
+
+    // data-join 运算符图标（使用 <image> 元素）
+    const operatorSelection = gOperators.selectAll<SVGImageElement, typeof operatorsData[0]>("image.operator")
+      .data(operatorsData, d => d.key);
+
+    // ENTER
+    const operatorEnter = operatorSelection.enter()
+      .append("image")
+      .attr("class", "operator")
+      .attr("width", 20)
+      .attr("height", 20)
+      .attr("href", d => {
+        if (d.operator === "AND") return andsvg;
+        if (d.operator === "OR") return orsvg;
+        return "";
+      })
+      .attr("x", d => d.x - 10)
+      .attr("y", d => d.y - 10)
+      .style("opacity", 0);
+
+    operatorEnter.transition()
+      .duration(transitionDuration)
+      .style("opacity", 1);
+
+    // UPDATE
+    operatorSelection.transition()
+      .duration(transitionDuration)
+      .attr("x", d => d.x - 10)
+      .attr("y", d => d.y - 10);
+
+    // EXIT
+    operatorSelection.exit()
+      .transition()
+      .duration(transitionDuration)
+      .style("opacity", 0)
+      .remove();
+  }
+
+  // 初始绘制
+  update();
 }
