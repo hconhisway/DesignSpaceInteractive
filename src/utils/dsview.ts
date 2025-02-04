@@ -20,12 +20,38 @@ interface DSTreeNode {
  * 确保每个节点都有 collapsed 属性（如果没有则赋默认值 false）
  */
 function ensureCollapsedState(data: DSTreeNode): void {
+
   if (data.collapsed === undefined) {
     data.collapsed = false;
   }
   if (data.children) {
     data.children.forEach(child => ensureCollapsedState(child));
   }
+}
+
+function expandRelatedNodes(node: DSTreeNode, projectionSet: Set<string>) {
+  let needExpand = false;
+
+  // 检查当前节点是否需要展开
+  if (projectionSet.has(node.name)) {
+    node.collapsed = false;
+    needExpand = true;
+  }
+
+  // 递归处理子节点
+  if (node.children) {
+    node.children.forEach(child => {
+      const childNeedExpand = expandRelatedNodes(child, projectionSet);
+      needExpand = needExpand || childNeedExpand;
+    });
+  }
+
+  // 如果子节点需要展开，则当前节点必须展开
+  if (needExpand) {
+    node.collapsed = false;
+  }
+
+  return needExpand;
 }
 
 /**
@@ -55,7 +81,8 @@ function calculateWid(
  * - 父节点与子节点之间的逻辑运算符图标放到 <g class="operators"> 中  
  * 点击节点时，仅更新相关节点（位置、宽度）并通过 transition 实现动画，而不重绘整个树
  */
-export function drawDSTree(gElement: SVGGElement): void {
+export function drawDSTree(gElement: SVGGElement, projectionList: string[] = []): void {
+  // console.log(projectionList);
   // 全局数据保持不变，点击时修改各节点的 collapsed 属性
   ensureCollapsedState(dstreeData as DSTreeNode);
 
@@ -73,9 +100,14 @@ export function drawDSTree(gElement: SVGGElement): void {
   const arrowSize = 5;
   const textPadding = 7;
   const transitionDuration = 500;
-
+  const projectionSet = new Set(projectionList);
+  expandRelatedNodes(dstreeData as DSTreeNode, projectionSet);
+  
   // update 函数：计算新布局并更新节点和逻辑运算符图标的显示位置
   function update() {
+    
+    // console.log(projectionList);
+    // galleryCollapse(dstreeData as DSTreeNode, projectionList);
     // 构造层次数据：若 collapsed 为 true，则不返回子节点
     const root = d3.hierarchy(dstreeData as DSTreeNode, d => d.collapsed ? null : d.children);
     calculateWid(root, nodeWidth, nodeHeight);
@@ -152,23 +184,71 @@ export function drawDSTree(gElement: SVGGElement): void {
       }
 
       // 3. 节点文本，按原来逻辑在节点上方显示
+      // g.append("text")
+      //   .attr("class", "node-text")
+      //   .attr("x", 0)
+      //   // 文本 y 坐标相对于全局位置（0 表示当前组原点）再向上偏移 nodeHeight/2 后加 textPadding
+      //   .attr("y", -nodeHeight / 2 + textPadding)
+      //   .attr("text-anchor", "middle")
+      //   .attr("dominant-baseline", "middle")
+      //   .attr("fill", projectionList.includes(d.data.name) ? "#E45756" : "black")
+      //   .style("font-weight", projectionList.includes(d.data.name) ? 600 : "normal")
+      //   .text(d.data.name)
+      //   .each(function() {
+      //     const text = this as SVGTextElement;
+      //     const textLength = text.getBBox().width;
+      //     if (textLength > width * 0.75) {
+      //       const scale = (width * 0.75) / textLength;
+      //       text.setAttribute('transform', `scale(${scale})`);
+      //       // text.setAttribute('transform-origin', `${d.x - minX} ${(d.y - minY - nodeHeight / 2)}`);
+      //     }
+      //   });
       g.append("text")
-        .attr("class", "node-text")
-        .attr("x", 0)
-        // 文本 y 坐标相对于全局位置（0 表示当前组原点）再向上偏移 nodeHeight/2 后加 textPadding
-        .attr("y", -nodeHeight / 2 + textPadding)
-        .attr("text-anchor", "middle")
-        .attr("dominant-baseline", "middle")
-        .text(d.data.name)
-        .each(function() {
-          const text = this as SVGTextElement;
-          const textLength = text.getBBox().width;
-          if (textLength > width * 0.75) {
-            const scale = (width * 0.75) / textLength;
-            text.setAttribute('transform', `scale(${scale})`);
-            // text.setAttribute('transform-origin', `${d.x - minX} ${(d.y - minY - nodeHeight / 2)}`);
+      .attr("class", "node-text")
+      .attr("x", 0)
+      // The text y coordinate is adjusted relative to the group origin:
+      .attr("y", -nodeHeight / 2 + textPadding)
+      .attr("text-anchor", "middle")
+      .attr("dominant-baseline", "middle")
+      .attr("fill", projectionList.includes(d.data.name) ? "white" : "black")
+      .style("font-weight", projectionList.includes(d.data.name) ? 600 : "normal")
+      .text(d.data.name)
+      .each(function () {
+        // 'this' is the text element
+        const textElem = this as SVGTextElement;
+        // Get the rendered text length (this takes CSS into account)
+        const computedLength = textElem.getComputedTextLength();
+        let scale = 1;
+        if (computedLength > width * 0.75) {
+          // If the text is too long, compute a scaling factor so that its length is at most width*0.75.
+          scale = (width * 0.75) / computedLength;
+          textElem.setAttribute("transform", `scale(${scale})`);
+        }
+        
+        // Only add a rectangle if the node name is in the projection list
+        if (projectionList.includes(d.data.name)) {
+          // Get the bounding box of the text element.
+          const bbox = textElem.getBBox();
+          
+          // Ensure that the parent node exists and cast it as Element
+          if (textElem.parentNode !== null) {
+            const parent = textElem.parentNode as Element;
+            // Insert a rectangle behind the text element.
+            d3.select(parent)
+              .insert("rect", "text") // insert before the text element so it appears behind
+              .attr("x", bbox.x)
+              .attr("y", bbox.y)
+              .attr("width", bbox.width)
+              .attr("height", bbox.height)
+              .attr("fill", "#E45756")
+              .attr("stroke", "#E45756")
+              .attr("transform", scale !== 1 ? `scale(${scale})` : null);
           }
-        });
+        }
+      });
+    
+
+
 
       // 4. 如果有条件（EQUAL/LESS），则显示图标（放在节点上方）
       if (d.data.sum !== 'None') {
@@ -238,8 +318,10 @@ export function drawDSTree(gElement: SVGGElement): void {
     
         // 更新点击区域尺寸和位置
         g.select(".clickable-area")
-          .attr("x", offsetX + padding)
-          .attr("width", width - 2 * padding);
+          .transition()
+          .duration(transitionDuration)
+          .attr("width", width - 2 * padding)
+          .attr("x", offsetX + padding);
     
         // 根据 collapsed 状态处理左右竖线
         if (!d.data.collapsed && d.children && d.children.length > 0) {
