@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 import { flextree } from "d3-flextree";
-import dstreeData from '../assets/dstree.json';
+// import dstreeData from '../assets/dstree.json';
 import orsvg from '../assets/or.svg';
 import andsvg from '../assets/and.svg';
 import equalsvg from '../assets/equal.svg';
@@ -15,6 +15,8 @@ interface DSTreeNode {
   size?: [number, number];
   collapsed?: boolean;
 }
+
+
 
 /**
  * 确保每个节点都有 collapsed 属性（如果没有则赋默认值 false）
@@ -81,10 +83,10 @@ function calculateWid(
  * - 父节点与子节点之间的逻辑运算符图标放到 <g class="operators"> 中  
  * 点击节点时，仅更新相关节点（位置、宽度）并通过 transition 实现动画，而不重绘整个树
  */
-export function drawDSTree(gElement: SVGGElement, projectionList: string[] = []): void {
+export function drawDSTree(gElement: SVGGElement, projectionList: string[] = [], dstreeData: DSTreeNode): void {
   // console.log(projectionList);
   // 全局数据保持不变，点击时修改各节点的 collapsed 属性
-  ensureCollapsedState(dstreeData as DSTreeNode);
+  ensureCollapsedState(dstreeData);
 
   // 使用 D3 选择 svg，并创建容器组（后续所有更新均在这些容器内进行）
   const svg = d3.select(gElement);
@@ -101,7 +103,7 @@ export function drawDSTree(gElement: SVGGElement, projectionList: string[] = [])
   const textPadding = 7;
   const transitionDuration = 500;
   const projectionSet = new Set(projectionList);
-  expandRelatedNodes(dstreeData as DSTreeNode, projectionSet);
+  expandRelatedNodes(dstreeData, projectionSet);
   
   // update 函数：计算新布局并更新节点和逻辑运算符图标的显示位置
   function update() {
@@ -109,7 +111,7 @@ export function drawDSTree(gElement: SVGGElement, projectionList: string[] = [])
     // console.log(projectionList);
     // galleryCollapse(dstreeData as DSTreeNode, projectionList);
     // 构造层次数据：若 collapsed 为 true，则不返回子节点
-    const root = d3.hierarchy(dstreeData as DSTreeNode, d => d.collapsed ? null : d.children);
+    const root = d3.hierarchy(dstreeData, d => d.collapsed ? null : d.children);
     calculateWid(root, nodeWidth, nodeHeight);
     const treeLayout = flextree<DSTreeNode>({});
     const treeData = treeLayout(root);

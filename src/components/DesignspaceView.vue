@@ -2,7 +2,15 @@
 import { onMounted, ref, watch, defineProps } from 'vue';
 import { drawDSTree } from '../utils/dsview';
 import * as d3 from 'd3';
-
+interface DSTreeNode {
+  name: string;
+  logicalOperators: string[];
+  sum: string;
+  children: DSTreeNode[];
+  wid?: number;
+  size?: [number, number];
+  collapsed?: boolean;
+}
 // const props = defineProps({
 //   projectionList: {
 //     type: Array,
@@ -12,7 +20,8 @@ import * as d3 from 'd3';
 // });
 
 const props = defineProps<{
-  projectionList: string[] // 明确指定为字符串数组
+  projectionList: string[]; // 明确指定为字符串数组
+  dstreeData: DSTreeNode;
 }>();
 
 const gElement = ref<SVGGElement | null>(null);
@@ -48,7 +57,7 @@ const updateVisualization = () => {
   clearVisualization();
 //   drawDSTree(gElement.value);
 
-  drawDSTree(gElement.value, props.projectionList);
+  drawDSTree(gElement.value, props.projectionList, props.dstreeData);
 };
 
 // 初始化组件时

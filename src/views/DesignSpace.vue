@@ -3,6 +3,21 @@ import { defineComponent, ref, onMounted } from 'vue'
 import DesignSpaceView from '../components/DesignspaceView.vue'
 import GalleryView from '../components/GalleryView.vue';
 
+async function fetchDstreeData() {
+  try {
+      const response = await fetch('https://raw.githubusercontent.com/hconhisway/DesignSpaceInteractive/refs/heads/main/src/assets/dstree.json');
+      if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const dstreeData = await response.json();
+      console.log(dstreeData); // 你可以在这里处理数据
+      return dstreeData;
+  } catch (error) {
+      console.error('Error fetching dstree.json:', error);
+      return null;
+  }
+}
+
 export default defineComponent({
   components: {
     GalleryView,
@@ -11,15 +26,31 @@ export default defineComponent({
   setup() {
     const rawCsvData = ref('')
     const currentProjection = ref<string[]>([])
+    const dstreeData = ref(null); // 改为响应式引用
 
+    // 新增数据获取逻辑
+    (async () => {
+      dstreeData.value = await fetchDstreeData();
+    })();
     // 加载CSV文件的异步方法
     const loadCSV = async () => {
+      // try {
+      //   const csvModule = await import('@/assets/Gallery.csv?raw')
+      //   rawCsvData.value = csvModule.default
+      //   // const response = await fetch('../assets/Gallery.csv')
+      //   // if (!response.ok) throw new Error('Failed to load CSV')
+      //   // rawCsvData.value = await response.text()
+      // } catch (error) {
+      //   console.error('Error loading CSV:', error)
+      // }
       try {
-        const csvModule = await import('@/assets/Gallery.csv?raw')
-        rawCsvData.value = csvModule.default
-        // const response = await fetch('../assets/Gallery.csv')
-        // if (!response.ok) throw new Error('Failed to load CSV')
-        // rawCsvData.value = await response.text()
+      const response = await fetch(
+        'https://docs.google.com/spreadsheets/d/e/2PACX-1vRgVvRNgeNqgC1yObFsqNq0sKTkIPTJ_nI10fdhw75zXZ8ZtRyMFkZ2CR7awzDx4udBe243GwFuNlip/pub?gid=1078384481&single=true&output=csv'
+      )
+      
+      if (!response.ok) throw new Error('Failed to load CSV from Google Sheets')
+      rawCsvData.value = await response.text()
+      
       } catch (error) {
         console.error('Error loading CSV:', error)
       }
@@ -36,6 +67,7 @@ export default defineComponent({
     return {
       rawCsvData,
       currentProjection,
+      dstreeData,
       handleProjectionSelect
     }
   }
@@ -45,7 +77,12 @@ export default defineComponent({
 <template>
   <div class="designspace">
     <div class="column">
-      <DesignSpaceView :projection-list="currentProjection" />
+      <!-- <DesignSpaceView :projection-list="currentProjection" :dstree-data="dstreeData"/> -->
+      <DesignSpaceView
+        v-if="dstreeData" 
+        :projection-list="currentProjection" 
+        :dstree-data="dstreeData"
+      />
     </div>
     <div class="divider"></div>
     <div class="column">
