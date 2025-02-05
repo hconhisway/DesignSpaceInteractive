@@ -1,0 +1,208 @@
+{
+  "name": "Gantts",
+  "logicalOperators": [
+      "AND",
+      "AND"
+    ],
+    "sum": "None",
+    "children":[
+      {
+        "name": "Duration Encoded along Timelines",
+        "logicalOperators": [
+          "AND"
+        ],
+        "sum": "None",
+        "children": [
+          {
+            "name": "Duration-encoding marks",
+            "logicalOperators": [
+              "OR",
+              "OR"
+            ],
+            "sum": "None",
+            "children": [
+              {
+                "name": "Bars",
+                "logicalOperators": [
+                  "OR"
+                ],
+                "sum": "LESS",
+                "children": [
+                  { "name": "Height encoded" },
+                  { "name": "Height unencoded" }
+                ]
+              },
+              { "name": "Lines" },
+              { "name": "Springs" }
+            ]
+          },
+          {
+            "name": "Time axis",
+            "logicalOperators": [
+              "AND"
+            ],
+            "sum": "None",
+            "children": [
+              {
+                "name": "Orientation",
+                "logicalOperators": [
+                  "OR",
+                  "OR"
+                ],
+                "sum": "EQUAL",
+                "children": [
+                  { "name": "Vertical" },
+                  { "name": "Horizontal" },
+                  { "name": "Spiral" }
+                ]
+              },
+              { "name": "Ticks" }
+            ]
+          }
+        ]
+      },
+      
+
+      {
+        "name": "Non-linear Dependencies",
+        "children": [
+          {
+            "name": "Connection (lines)",
+            "logicalOperators": [
+              "OR",
+              "OR",
+              "OR"
+            ],
+            "sum": "None",
+            "children": [
+              { "name": "Arrows" },
+              { "name": "Width" },
+              { "name": "Color" }
+            ]
+          },
+          {
+            "name": "Position",
+            "logicalOperators": [
+                "OR"
+            ],
+            "sum": "LESS",
+            "children": [
+              { "name": "Adjacency" },
+              { "name": "Constraints" }
+            ]
+          },
+          {
+            "name": "Colors",
+            "logicalOperators": [
+                "OR"
+            ],
+            "sum": "LESS",
+            "children": [
+              { "name": "Color Hues" },
+              { "name": "Gradient" }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Discrete Tracks",
+        "logicalOperators": [
+          "AND",
+          "AND"
+        ],
+        "sum": "None",
+        "children": [
+          {
+            "name": "Hierarchy",
+            "logicalOperators": [
+                "OR"
+            ],
+            "sum": "EQUAL",
+            "children": [
+              { "name": "1-level" },
+              {
+                "name": "multi-level",
+                "logicalOperators": [
+                    "OR"
+                ],
+                "sum": "LESS",
+                "children": [
+                  {
+                    "name": "parallel"
+                  },
+                  {
+                    "name": "superimposed",
+                    "logicalOperators": [
+                        "OR"
+                    ],
+                    "sum": "LESS",
+                    "children": [
+                      { "name": "categorical" },
+                      { "name": "depth-encoded" }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Sortable",
+            "logicalOperators": [
+                "OR"
+            ],
+            "sum": "EQUAL",
+            "children": [
+              { "name": "Unsorted" },
+              {
+                "name": "Sorted",
+                "logicalOperators": [
+                    "OR"
+                ],
+                "sum": "LESS",
+                "children": [
+                  {
+                    "name": "Derived",
+                    "logicalOperators": [
+                        "OR"
+                    ],
+                    "sum": "NONE",
+                    "children": [
+                      { "name": "initial start" },
+                      { "name": "highest time span" }
+                    ]
+                  },
+                  {
+                    "name": "Intrinsic",
+                    "logicalOperators": [
+                        "OR"
+                    ],
+                    "sum": "LESS",
+                    "children": [
+                      { "name": "Alphabetical" },
+                      { "name": "ID" }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Size distribution",
+            "logicalOperators": [
+                "OR"
+            ],
+            "sum": "EQUAL",
+            "children": [
+              { "name": "equal" },
+              { "name": "varied" }
+            ]
+          }
+        ]
+      }
+
+    ]
+}
+
+
+
+  
