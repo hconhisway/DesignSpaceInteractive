@@ -238,6 +238,7 @@ export function drawDSTree(gElement: SVGGElement, projectionList: string[] = [],
             // Insert a rectangle behind the text element.
             d3.select(parent)
               .insert("rect", "text") // insert before the text element so it appears behind
+              .attr("class", "node-text-rect")
               .attr("x", bbox.x)
               .attr("y", bbox.y)
               .attr("width", bbox.width)
@@ -356,6 +357,7 @@ export function drawDSTree(gElement: SVGGElement, projectionList: string[] = [],
               text.setAttribute('transform', `scale(${scale})`);
             }
           });
+        
       });
 
     // EXIT：对需要移除的节点淡出后删除
