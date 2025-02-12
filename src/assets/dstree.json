@@ -64,7 +64,7 @@
       
 
       {
-        "name": "Non-linear Dependencies",
+        "name": "Cross-track Dependencies",
         "children": [
           {
             "name": "Connection (lines)",
@@ -130,8 +130,13 @@
                   {
                     "name": "parallel"
                   },
+		  { 
+		    "name": "icicle"
+		    "description": "Hierarchy shown in icicle-plot type layout."
+		  },
                   {
-                    "name": "superimposed",
+                    "name": "containment",
+		    "description": "Hierarchy shown using containment.",
                     "logicalOperators": [
                         "OR"
                     ],
@@ -145,47 +150,129 @@
               }
             ]
           },
-          {
-            "name": "Sortable",
-            "logicalOperators": [
-                "OR"
-            ],
-            "sum": "EQUAL",
-            "children": [
-              { "name": "Unsorted" },
-              {
-                "name": "Sorted",
-                "logicalOperators": [
-                    "OR"
-                ],
-                "sum": "LESS",
-                "children": [
-                  {
-                    "name": "Derived",
-                    "logicalOperators": [
-                        "OR"
-                    ],
-                    "sum": "NONE",
-                    "children": [
-                      { "name": "initial start" },
-                      { "name": "highest time span" }
-                    ]
-                  },
-                  {
-                    "name": "Intrinsic",
-                    "logicalOperators": [
-                        "OR"
-                    ],
-                    "sum": "LESS",
-                    "children": [
-                      { "name": "Alphabetical" },
-                      { "name": "ID" }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
+	  { "name": "Arrangement",
+	    "logicalOperators": [
+		"OR"
+	    ],
+	    "sum": "EQUAL",
+	    "children": [		  
+	      {
+		"name": "Grid",
+		"logicalOperators": [
+		    "OR"
+		],
+		"sum": "EQUAL",
+		"children": [
+		  {
+		      "name": "Time-Orthogonal",
+		      "description": "Tracks are arranged orthogonal to time axis.",
+		      "logicalOperators": [
+			  "OR"
+		       ],
+		      "sum": "EQUAL",
+		      "children": [
+		      {
+			"name": "Sortable",
+			"logicalOperators": [
+			    "OR"
+			],
+			"sum": "EQUAL",
+			"children": [
+			  { "name": "Unsorted" },
+			  {
+			    "name": "Sorted",
+			    "logicalOperators": [
+				"OR"
+			    ],
+			    "sum": "LESS",
+			    "children": [
+			      {
+				"name": "Derived",
+				"logicalOperators": [
+				    "OR"
+				],
+				"sum": "NONE",
+				"children": [
+				  { "name": "initial start" },
+				  { "name": "highest time span" }
+				]
+			      },
+			      {
+				"name": "Intrinsic",
+				"logicalOperators": [
+				    "OR"
+				],
+				"sum": "LESS",
+				"children": [
+				  { "name": "Alphabetical" },
+				  { "name": "ID" }
+				]
+			      }
+			    ]
+			  }
+			]
+		      }
+		    ]
+		  },
+		  {  
+		    "name": "2D",
+		    "description": "Track arrangement uses 2D space.",
+		    "logicalOperators": [
+			"OR"
+		    ],
+		    "sum": "EQUAL",
+		    "children": [
+		      {
+			"name": "Sortable",
+			"logicalOperators": [
+			    "OR"
+			],
+			"sum": "EQUAL",
+			"children": [
+			  { "name": "Unsorted" },
+			  {
+			    "name": "Sorted",
+			    "logicalOperators": [
+				"OR"
+			    ],
+			    "sum": "LESS",
+			    "children": [
+			      {
+				"name": "Derived",
+				"logicalOperators": [
+				    "OR"
+				],
+				"sum": "NONE",
+				"children": [
+				  { "name": "initial start" },
+				  { "name": "highest time span" }
+				]
+			      },
+			      {
+				"name": "Intrinsic",
+				"logicalOperators": [
+				    "OR"
+				],
+				"sum": "LESS",
+				"children": [
+				  { "name": "Alphabetical" },
+				  { "name": "ID" },
+				  { "name": "Geographical" }
+				]
+			      }
+			    ]
+			  }
+			]
+		      }
+		    ]
+		  }
+	        ]
+	      },
+	      {
+		"name": "Space-filling"
+	      }
+	    ]
+	  },
           {
             "name": "Size distribution",
             "logicalOperators": [
