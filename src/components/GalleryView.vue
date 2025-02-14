@@ -104,8 +104,8 @@ export default {
 
     itemStyle(item) {
       return {
-        width: this.hasValidImage(item) ? 'auto' : '100px',
-        height: '50px'
+        width: this.hasValidImage(item) ? 'auto' : '200px',
+        height: '100px'
       }
     },
 

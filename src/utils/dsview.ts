@@ -107,6 +107,7 @@ export function drawDSTree(gElement: SVGGElement, projectionList: string[] = [],
   
   // update 函数：计算新布局并更新节点和逻辑运算符图标的显示位置
   function update() {
+    ensureCollapsedState(dstreeData);
     
     // console.log(projectionList);
     // galleryCollapse(dstreeData as DSTreeNode, projectionList);
