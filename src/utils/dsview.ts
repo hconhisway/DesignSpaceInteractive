@@ -14,6 +14,7 @@ interface DSTreeNode {
   wid?: number;
   size?: [number, number];
   collapsed?: boolean;
+  displayName?: string;
 }
 
 
@@ -22,13 +23,33 @@ interface DSTreeNode {
  * 确保每个节点都有 collapsed 属性（如果没有则赋默认值 false）
  */
 function ensureCollapsedState(data: DSTreeNode): void {
-
   if (data.collapsed === undefined) {
     data.collapsed = false;
   }
   if (data.children) {
     data.children.forEach(child => ensureCollapsedState(child));
   }
+}
+
+function hasSpecialNode(node: DSTreeNode): boolean {
+  const specialNodes = ["Duration Encoded along Timelines", "Cross-track Dependencies", "Discrete Tracks"];
+  return specialNodes.includes(node.name);
+}
+
+function hasProjectedDescendant(node: DSTreeNode, projectionList: string[]): boolean {
+  if (node.name === 'Gantts') {
+    if (hasProjectedDescendant(node.children[0], projectionList) && hasProjectedDescendant(node.children[1], projectionList) && hasProjectedDescendant(node.children[2], projectionList)) {
+      return true;
+    }
+    return false;
+  }
+  if (projectionList.includes(node.name)) {
+    return true;
+  }
+  if (node.children) {
+    return node.children.some(child => hasProjectedDescendant(child, projectionList));
+  }
+  return false;
 }
 
 function expandRelatedNodes(node: DSTreeNode, projectionSet: Set<string>) {
@@ -213,9 +234,9 @@ export function drawDSTree(gElement: SVGGElement, projectionList: string[] = [],
       .attr("y", -nodeHeight / 2 + textPadding)
       .attr("text-anchor", "middle")
       .attr("dominant-baseline", "middle")
-      .attr("fill", projectionList.includes(d.data.name) ? "white" : "black")
-      .style("font-weight", projectionList.includes(d.data.name) ? 600 : "normal")
-      .text(d.data.name)
+      .attr("fill", projectionList.includes(d.data.name) || hasProjectedDescendant(d.data, projectionList) ? "white" : "black")
+      .style("font-weight", projectionList.includes(d.data.name) || hasProjectedDescendant(d.data, projectionList) ? 600 : "normal")
+      .text( d.data.displayName ? d.data.displayName : d.data.name)
       .each(function () {
         // 'this' is the text element
         const textElem = this as SVGTextElement;
@@ -229,7 +250,7 @@ export function drawDSTree(gElement: SVGGElement, projectionList: string[] = [],
         }
         
         // Only add a rectangle if the node name is in the projection list
-        if (projectionList.includes(d.data.name)) {
+        if (projectionList.includes(d.data.name) || hasProjectedDescendant(d.data, projectionList)) {
           // Get the bounding box of the text element.
           const bbox = textElem.getBBox();
           
@@ -249,6 +270,31 @@ export function drawDSTree(gElement: SVGGElement, projectionList: string[] = [],
               .attr("transform", scale !== 1 ? `scale(${scale})` : null);
           }
         }
+
+        if (hasSpecialNode(d.data) && !hasProjectedDescendant(d.data, projectionList) && projectionList.length > 0) {
+          // Get the bounding box of the text element.
+          const bbox = textElem.getBBox();
+          
+          // Ensure that the parent node exists and cast it as Element
+          if (textElem.parentNode !== null) {
+            const parent = textElem.parentNode as Element;
+            // Insert a rectangle behind the text element.
+            d3.select(parent)
+              .insert("rect", "text") // insert before the text element so it appears behind
+              .attr("class", "node-text-rect")
+              .attr("x", bbox.x)
+              .attr("y", bbox.y)
+              .attr("width", bbox.width)
+              .attr("height", bbox.height)
+              .attr("fill", "#86BA80")
+              .attr("stroke", "#86BA80")
+              .attr("transform", scale !== 1 ? `scale(${scale})` : null);
+          }
+        }
+
+
+
+
       });
     
 

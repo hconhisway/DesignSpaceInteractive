@@ -222,42 +222,50 @@
                   "sum": "EQUAL",
                   "children": [
                     {
-                      "name": "Unsorted"
+                      "name": "TO-Unsorted",
+                      "displayName": "Unsorted"
                     },
                     {
-                      "name": "Sorted",
+                      "name": "TO-Sorted",
+                      "displayName": "Sorted",
                       "logicalOperators": [
                         "OR"
                       ],
                       "sum": "LESS",
                       "children": [
                         {
-                          "name": "Derived",
+                          "name": "TO-Derived",
+                          "displayName": "Derived",
                           "logicalOperators": [
                             "OR"
                           ],
                           "sum": "NONE",
                           "children": [
                             {
-                              "name": "initial start"
+                              "name": "TO-initial start",
+                              "displayName": "initial start"
                             },
                             {
-                              "name": "highest time span"
+                              "name": "TO-highest time span",
+                              "displayName": "highest time span"
                             }
                           ]
                         },
                         {
-                          "name": "Intrinsic",
+                          "name": "TO-Intrinsic",
+                          "displayName": "Intrinsic",
                           "logicalOperators": [
                             "OR"
                           ],
                           "sum": "LESS",
                           "children": [
                             {
-                              "name": "Alphabetical"
+                              "name": "TO-Alphabetical",
+                              "displayName": "Alphabetical"
                             },
                             {
-                              "name": "ID"
+                              "name": "TO-ID",
+                              "displayName": "ID"
                             }
                           ]
                         }
@@ -274,45 +282,54 @@
                   "sum": "EQUAL",
                   "children": [
                     {
-                      "name": "Unsorted"
+                      "name": "2D-Unsorted",
+                      "displayName": "Unsorted"
                     },
                     {
-                      "name": "Sorted",
+                      "name": "2D-Sorted",
+                      "displayName": "Sorted",
                       "logicalOperators": [
                         "OR"
                       ],
                       "sum": "LESS",
                       "children": [
                         {
-                          "name": "Derived",
+                          "name": "2D-Derived",
+                          "displayName": "Derived",
                           "logicalOperators": [
                             "OR"
                           ],
                           "sum": "NONE",
                           "children": [
                             {
-                              "name": "initial start"
+                              "name": "2D-initial start",
+                              "displayName": "initial start"
                             },
                             {
-                              "name": "highest time span"
+                              "name": "2D-highest time span",
+                              "displayName": "highest time span"
                             }
                           ]
                         },
                         {
-                          "name": "Intrinsic",
+                          "name": "2D-Intrinsic",
+                          "displayName": "Intrinsic",
                           "logicalOperators": [
                             "OR"
                           ],
                           "sum": "LESS",
                           "children": [
                             {
-                              "name": "Alphabetical"
+                              "name": "2D-Alphabetical",
+                              "displayName": "Alphabetical"
                             },
                             {
-                              "name": "ID"
+                              "name": "2D-ID",
+                              "displayName": "ID"
                             },
                             {
-                              "name": "Geographical"
+                              "name": "2D-Geographical",
+                              "displayName": "Geographical"
                             }
                           ]
                         }
