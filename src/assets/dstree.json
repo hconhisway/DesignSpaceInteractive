@@ -85,6 +85,9 @@
                 },
                 {
                   "name": "Discrete Time"
+                },
+                {
+                  "name": "Derived Time"
                 }
               ]
             },
@@ -269,6 +272,10 @@
                             {
                               "name": "TO-ID",
                               "displayName": "ID"
+                            },
+                            {
+                              "name": "TO-Mixed",
+                              "displayName": "Mixed"
                             }
                           ]
                         }
