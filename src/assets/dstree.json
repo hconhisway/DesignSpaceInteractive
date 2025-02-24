@@ -331,6 +331,10 @@
                               "displayName": "ID"
                             },
                             {
+                              "name": "2D-Circular",
+                              "displayName": "Circular"
+                            },
+                            {
                               "name": "2D-Geographical",
                               "displayName": "Geographical"
                             }
