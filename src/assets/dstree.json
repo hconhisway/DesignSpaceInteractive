@@ -37,6 +37,12 @@
               ]
             },
             {
+              "name": "Extruded Ticks"
+            },
+            {
+              "name": "Areas"
+            },
+            {
               "name": "Lines"
             },
             {
@@ -82,6 +88,9 @@
                 },
                 {
                   "name": "Discrete Time"
+                },
+                {
+                  "name": "Derived Time"
                 }
               ]
             },
@@ -266,6 +275,10 @@
                             {
                               "name": "TO-ID",
                               "displayName": "ID"
+                            },
+                            {
+                              "name": "TO-Mixed",
+                              "displayName": "Mixed"
                             }
                           ]
                         }
@@ -326,6 +339,10 @@
                             {
                               "name": "2D-ID",
                               "displayName": "ID"
+                            },
+                            {
+                              "name": "2D-Circular",
+                              "displayName": "Circular"
                             },
                             {
                               "name": "2D-Geographical",
