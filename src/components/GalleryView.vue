@@ -1,37 +1,43 @@
 <template>
   <div class="gallery-wrapper">
-    <!-- 修改后的左侧信息区域：只显示选中的 item，并让 link 可点击 -->
-    <div class="info-list">
-      <div v-if="selectedItem">
-        <div class="item-link">
-          <a :href="selectedItem.link" target="_blank">{{ selectedItem.link }}</a>
+    <!-- 左侧信息区域 -->
+    <div class="info-panel">
+      <div class="info-content">
+        <div v-if="selectedItem">
+          <div class="item-link">
+            <a :href="selectedItem.link" target="_blank">{{ selectedItem.link }}</a>
+          </div>
+          <div class="item-description">{{ selectedItem.description }}</div>
         </div>
-        <div class="item-title">{{ "Title: " + selectedItem.title }}</div>
-        <div class="item-description">{{ "Description: " + selectedItem.description }}</div>
-      </div>
-      <!-- 可选：若无选中项，显示提示信息 -->
-      <div v-else>
-        <p>please select an item</p>
+        <div v-else>
+          <p>please select an item</p>
+        </div>
       </div>
     </div>
-    <!-- 右侧原有的 gallery view -->
-    <div class="gallery-container">
-      <div 
-        v-for="item in parsedData" 
-        :key="item.id"
-        class="gallery-item"
-        :class="{ selected: item.id === selectedItemId }"
-        :style="itemStyle(item)"
-        @click="handleItemClick(item)"
-      >
-        <img
-          v-if="hasValidImage(item)"
-          :src="item.image"
-          alt="Projection preview"
-          class="gallery-image"
-        />
-        <div v-else class="default-item">
-          {{ "NaN" }}
+    <!-- 重写右侧 gallery view -->
+    <div class="gallery-panel">
+      <div class="gallery-container">
+        <div 
+          v-for="item in parsedData" 
+          :key="item.id"
+          class="gallery-item"
+          :class="{ 
+            'selected': item.id === selectedItemId,
+            'expanded': item.id === expandedItemId
+          }"
+          @click="handleItemClick(item)"
+        >
+          <div class="item-inner" @click.stop="toggleExpand(item)">
+            <img
+              v-if="hasValidImage(item)"
+              :src="item.image"
+              alt="Projection preview"
+              class="gallery-image"
+            />
+            <div v-else class="default-item">
+              {{ "NaN" }}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -52,7 +58,8 @@ export default {
   data() {
     return {
       parsedData: [],
-      selectedItemId: null  // 用于记录被点击的 item 的 id
+      selectedItemId: null,
+      expandedItemId: null // 新增：跟踪展开的项目
     }
   },
   computed: {
@@ -112,80 +119,105 @@ export default {
     handleItemClick(item) {
       this.selectedItemId = item.id  // 记录当前点击的 item
       this.$emit('item-selected', item.projection)
-      // console.log(item.projection)
+    },
+    
+    // 修改：处理项目放大/缩小时也要更新选中状态
+    toggleExpand(item) {
+      // 同时更新选择状态，确保左侧面板能显示相应的信息
+      this.selectedItemId = item.id;
+      this.$emit('item-selected', item.projection);
+      
+      // 处理放大/缩小逻辑
+      if (this.expandedItemId === item.id) {
+        this.expandedItemId = null; // 如果点击的是当前放大项，则缩小
+      } else {
+        this.expandedItemId = item.id; // 否则放大该项
+      }
     }
   }
 }
 </script>
 
 <style scoped>
-/* 新增整体布局 */
+/* 修改整体布局 */
 .gallery-wrapper {
   display: flex;
+  height: 100%;
+  overflow: hidden;
 }
 
-/* 新增左侧信息列表 */
-.info-list {
+/* 左侧布局 */
+.info-panel {
   flex: 1;
-  padding: 15px;
-  overflow: auto;
   border-right: 1px solid #ccc;
-}
-.info-list ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-.info-list li {
-  margin-bottom: 10px;
-}
-.item-link a {
-  font-weight: bold;
-  color: inherit;
-  text-decoration: none;
-}
-.item-link a:hover {
-  text-decoration: underline;
-}
-.item-description {
-  font-size: 0.9em;
-  color: #666;
+  height: 100%;
+  overflow-y: auto;
 }
 
-/* 修改原有gallery样式 */
-.gallery-container {
-  flex: 2;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+.info-content {
   padding: 15px;
-  max-width: 100%;
-  overflow: auto;
+}
+
+/* 重写右侧布局为紧凑网格 */
+.gallery-panel {
+  flex: 2;
+  height: 100%;
+  overflow-y: auto;
+  position: relative;
+}
+
+.gallery-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+  padding: 12px;
 }
 
 .gallery-item {
+  position: relative;
   cursor: pointer;
-  border: 1px solid #ccc;
+  aspect-ratio: 1 / 1;
   border-radius: 4px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+/* 展开项目样式 */
+.gallery-item.expanded {
+  grid-column: span 4;
+  grid-row: span 4;
+  z-index: 10;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.item-inner {
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: border-color 0.2s;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  transition: transform 0.3s ease;
 }
 
-.gallery-item:hover {
+.gallery-item:hover .item-inner {
   border-color: #E45756;
 }
 
-/* 被选中的 item 边框加粗 */
-.gallery-item.selected {
-  border: 3px solid #E45756;
+.gallery-item.selected .item-inner {
+  border: 2px solid #E45756;
 }
 
 .gallery-image {
-  height: 100%;
-  width: auto;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.gallery-item.expanded .gallery-image {
+  transform: scale(1); /* 确保是放大3倍 */
 }
 
 .default-item {
@@ -193,5 +225,21 @@ export default {
   text-align: center;
   font-size: 0.9em;
   word-break: break-word;
+}
+
+.item-link a {
+  font-weight: bold;
+  color: inherit;
+  text-decoration: none;
+}
+
+.item-link a:hover {
+  text-decoration: underline;
+}
+
+.item-description {
+  font-size: 0.9em;
+  color: #666;
+  margin-top: 8px;
 }
 </style>
