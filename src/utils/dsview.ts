@@ -32,7 +32,7 @@ function ensureCollapsedState(data: DSTreeNode): void {
 }
 
 function hasSpecialNode(node: DSTreeNode): boolean {
-  const specialNodes = ["Duration Encoded along Timelines", "Cross-track Dependencies", "Discrete Tracks"];
+  const specialNodes = ["Duration Encoded along Timelines", "Cross-track Dependencies", "Discrete Tracks", "Gantts"];
   return specialNodes.includes(node.name);
 }
 
@@ -238,6 +238,9 @@ export function drawDSTree(gElement: SVGGElement, projectionList: string[] = [],
       .style("font-weight", projectionList.includes(d.data.name) || hasProjectedDescendant(d.data, projectionList) ? 600 : "normal")
       .text( d.data.displayName ? d.data.displayName : d.data.name)
       .each(function () {
+        if (!hasProjectedDescendant(d.data, projectionList) && !hasSpecialNode(d.data) && projectionList.length > 0 && d.children) {
+          d.data.collapsed = true;
+        }
         // 'this' is the text element
         const textElem = this as SVGTextElement;
         // Get the rendered text length (this takes CSS into account)
@@ -291,8 +294,6 @@ export function drawDSTree(gElement: SVGGElement, projectionList: string[] = [],
               .attr("transform", scale !== 1 ? `scale(${scale})` : null);
           }
         }
-
-
 
 
       });
