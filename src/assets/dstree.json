@@ -17,6 +17,8 @@
           "name": "Duration-encoding marks",
           "logicalOperators": [
             "OR",
+            "OR",
+            "OR",
             "OR"
           ],
           "sum": "None",
