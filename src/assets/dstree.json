@@ -23,6 +23,7 @@
           "children": [
             {
               "name": "Bars",
+	      "description": "Rectangles encoding time by length. Lines are included?",
               "logicalOperators": [
                 "OR"
               ],
@@ -37,16 +38,19 @@
               ]
             },
             {
-              "name": "Extruded Ticks"
+              "name": "Extruded Ticks",
+	      "description": "Any form of intended tick mark where extruded part encodes duration."
             },
             {
-              "name": "Areas"
+              "name": "Areas",
+	      "description": "Sparkline-style area chart where one axis encodes duration. The area can encode something else."
             },
             {
               "name": "Lines"
             },
             {
-              "name": "Springs"
+              "name": "Springs",
+	      "description": "Spring-line or wave-like marks. Period may encode something else."
             }
           ]
         },
@@ -66,13 +70,16 @@
               "sum": "EQUAL",
               "children": [
                 {
-                  "name": "Vertical"
+                  "name": "Vertical",
+		  "descrption": "Time axis is generally vertical."
                 },
                 {
-                  "name": "Horizontal"
+                  "name": "Horizontal",
+		  "description": "Time axis is generally horizontal."
                 },
                 {
-                  "name": "Spiral"
+                  "name": "Spiral",
+		  "description": "Time axis is a spiral."
                 }
               ]
             },
@@ -84,13 +91,16 @@
               "sum": "EQUAL",
               "children": [
                 {
-                  "name": "Continuous Time"
+                  "name": "Continuous Time",
+		  "description": "Represents a physically measured time. RENAME to Physical Time."
                 },
                 {
-                  "name": "Discrete Time"
+                  "name": "Discrete Time",
+		  "description": "DEPRECATED - Replace with Derived Time."
                 },
                 {
-                  "name": "Derived Time"
+                  "name": "Derived Time",
+		  "description": "Represents a derived form of time, such as logical time."
                 }
               ]
             },
@@ -106,6 +116,7 @@
       "children": [
         {
           "name": "Connection (lines)",
+	  "description": "Dependencies displayed with lines connecting two marks.",
           "logicalOperators": [
             "OR",
             "OR",
@@ -114,13 +125,17 @@
           "sum": "None",
           "children": [
             {
-              "name": "Arrows"
+              "name": "Arrows",
+	      "description": "Arrowheads are present on connective lines to indcate direction."
             },
             {
-              "name": "Width"
+              "name": "Width",
+	      "description": "Width indicates something intrinsic to the dependency, such as direction.",
+	      "theoretical": "true"
             },
             {
-              "name": "Color"
+              "name": "Color",
+	      "description": "Color indicates something intrinsic to the dependency, such as direction."
             }
           ]
         },
@@ -132,10 +147,12 @@
           "sum": "LESS",
           "children": [
             {
-              "name": "Adjacency"
+              "name": "Adjacency",
+	      "description": "Depedencies between marks are indicated via adjacency. Must indicate dependency beyond track hierarchy."
             },
             {
-              "name": "Constraints"
+              "name": "Constraints",
+	      "description": "Dependencies between marks are indicated via a layout constraint. Must indicate depednency beyond track hierarchy."
             }
           ]
         },
@@ -147,10 +164,13 @@
           "sum": "LESS",
           "children": [
             {
-              "name": "Color Hues"
+              "name": "Color Hues",
+	      "description": "Dependency indicated by matching mark colors."
             },
             {
-              "name": "Gradient"
+              "name": "Gradient",
+	      "description": "Color gradient indicates dependency information, such as saturation indicating parent-child relationships.",
+	      "theoretical": "true"
             }
           ]
         }
@@ -172,35 +192,40 @@
           "sum": "EQUAL",
           "children": [
             {
-              "name": "1-level"
+              "name": "1-level",
+	      "description": "There is no hierarchy between tracks."
             },
             {
               "name": "multi-level",
+	      "description": "The tracks are organized in a multi-level hierarchy.",
               "logicalOperators": [
                 "OR"
               ],
               "sum": "LESS",
               "children": [
                 {
-                  "name": "parallel"
+                  "name": "parallel",
+		  "description": "Tracks with hierarchical relationships are shown parallel to each other."
                 },
                 {
                   "name": "icicle",
-                  "description": "Hierarchy shown in icicle-plot type layout."
+                  "description": "Hierarchy shown in icicle-plot type layout, often with child tasks offset to indicate their relationship."
                 },
                 {
                   "name": "containment",
-                  "description": "Hierarchy shown using containment.",
+                  "description": "Hierarchy shown using containment, where child tasks are contained by their parent's track.",
                   "logicalOperators": [
                     "OR"
                   ],
                   "sum": "LESS",
                   "children": [
                     {
-                      "name": "categorical"
+                      "name": "categorical",
+		      "description": "Containment uses categorical encodings to differentiate tracks."
                     },
                     {
-                      "name": "depth-encoded"
+                      "name": "depth-encoded",
+		      "description": "Containment uses some form of depth-encoding to differentiate tracks."
                     }
                   ]
                 }
@@ -217,6 +242,7 @@
           "children": [
             {
               "name": "Grid",
+	      "description": "Tracks are laid out in a separated fashion. PROPOSAL: Rename to 'Partitioned'.",
               "logicalOperators": [
                 "OR"
               ],
@@ -252,11 +278,13 @@
                           "children": [
                             {
                               "name": "TO-initial start",
-                              "displayName": "initial start"
+                              "displayName": "initial start",
+			      "description": "Tracks are organized in order of their first event."
                             },
                             {
                               "name": "TO-highest time span",
-                              "displayName": "highest time span"
+                              "displayName": "highest time span",
+			      "description": "Tracks are organized in order of which has the longest time span overall."
                             }
                           ]
                         },
@@ -270,15 +298,18 @@
                           "children": [
                             {
                               "name": "TO-Alphabetical",
-                              "displayName": "Alphabetical"
+                              "displayName": "Alphabetical",
+			      "description": "Tracks are ordered alphabetically by some ID/name attribute."
                             },
                             {
                               "name": "TO-ID",
-                              "displayName": "ID"
+                              "displayName": "ID",
+			      "description": "Tracks are ordered by some ID attribute."
                             },
                             {
                               "name": "TO-Mixed",
-                              "displayName": "Mixed"
+                              "displayName": "Mixed",
+			      "descripton": "Tracks are ordered using several indicators."
                             }
                           ]
                         }
@@ -357,7 +388,8 @@
               ]
             },
             {
-              "name": "Space-filling"
+              "name": "Space-filling",
+	      "description": "Tracks are laid out in a space-filling/packed manner."
             }
           ]
         },
@@ -369,10 +401,12 @@
           "sum": "EQUAL",
           "children": [
             {
-              "name": "equal"
+              "name": "equal",
+	      "description": "Tracks are afforded equal space within the visualization."
             },
             {
-              "name": "varied"
+              "name": "varied",
+	      "description": "Tracks are afforded unequal space in the visualization."
             }
           ]
         }
