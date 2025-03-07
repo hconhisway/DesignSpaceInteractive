@@ -97,10 +97,6 @@
                   "description": "Represents a physically measured time. RENAME to Physical Time."
                 },
                 {
-                  "name": "Discrete Time",
-                  "description": "DEPRECATED - Replace with Derived Time."
-                },
-                {
                   "name": "Derived Time",
                   "description": "Represents a derived form of time, such as logical time."
                 }

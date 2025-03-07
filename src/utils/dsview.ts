@@ -15,6 +15,7 @@ interface DSTreeNode {
   size?: [number, number];
   collapsed?: boolean;
   displayName?: string;
+  description?: string; // Add description field to interface
 }
 
 
@@ -236,7 +237,93 @@ export function drawDSTree(gElement: SVGGElement, projectionList: string[] = [],
       .attr("dominant-baseline", "middle")
       .attr("fill", projectionList.includes(d.data.name) || hasProjectedDescendant(d.data, projectionList) ? "white" : "black")
       .style("font-weight", projectionList.includes(d.data.name) || hasProjectedDescendant(d.data, projectionList) ? 600 : "normal")
-      .text( d.data.displayName ? d.data.displayName : d.data.name)
+      .style("cursor", d.data.description ? "help" : "default") // Change cursor to indicate tooltip availability
+      .text(d.data.displayName ? d.data.displayName : d.data.name)
+      .on("mouseover", function(event) {
+        if (d.data.description) {
+          const tooltip = svg.append("g")
+            .attr("class", "tooltip")
+            .style("pointer-events", "none");
+
+          // Calculate tooltip width based on text length
+          const maxWidth = 300;
+          let tooltipWidth = Math.min(d.data.description.length * 7, maxWidth);
+          tooltipWidth = Math.max(tooltipWidth, 100); // Minimum width
+
+          // Create background rectangle
+          tooltip.append("rect")
+            .attr("fill", "white")
+            .attr("stroke", "#ccc")
+            .attr("rx", 4)
+            .attr("ry", 4)
+            .style("opacity", 0.95);
+
+          // Create text element with word wrapping
+          const tooltipText = tooltip.append("text")
+            .attr("fill", "black")
+            .attr("font-size", "17px")
+            .attr("dy", "1em")
+            .style("pointer-events", "none");
+
+          // Handle word wrapping
+          const words = d.data.description.split(/\s+/);
+          let line = "";
+          let lineCount = 0;
+          const lineHeight = 18;
+          const padding = 6;
+          
+          words.forEach(word => {
+            const testLine = line + (line ? " " : "") + word;
+            const testWidth = testLine.length * 7; // Rough estimate of text width
+            
+            if (testWidth > tooltipWidth - padding * 2) {
+              tooltipText.append("tspan")
+                .attr("x", padding)
+                .attr("y", padding + lineCount * lineHeight)
+                .attr("dy", lineCount === 0 ? "1em" : 1.2 * lineHeight + "px")
+                .text(line);
+              line = word;
+              lineCount++;
+            } else {
+              line = testLine;
+            }
+          });
+          
+          tooltipText.append("tspan")
+            .attr("x", padding)
+            .attr("y", padding + lineCount * lineHeight)
+            .attr("dy", lineCount === 0 ? "1em" : 1.2 * lineHeight + "px")
+            .text(line);
+
+          // Get bbox for sizing the background rectangle
+          const tooltipBBox = tooltipText.node()!.getBBox();
+          tooltip.select("rect")
+            .attr("width", tooltipBBox.width + padding * 2)
+            .attr("height", tooltipBBox.height + padding * 2);
+          
+          // Position tooltip near the mouse but ensure it fits on screen
+          const [mouseX, mouseY] = d3.pointer(event, svg.node());
+          const offsetX = 10;
+          const offsetY = -10;
+          
+          tooltip.attr("transform", `translate(${mouseX + offsetX}, ${mouseY + offsetY})`);
+        }
+      })
+      .on("mousemove", function(event) {
+        if (d.data.description) {
+          const [mouseX, mouseY] = d3.pointer(event, svg.node());
+          const tooltip = svg.select(".tooltip");
+          const offsetX = 10;
+          const offsetY = -10;
+          
+          tooltip.attr("transform", `translate(${mouseX + offsetX}, ${mouseY + offsetY})`);
+        }
+      })
+      .on("mouseout", function() {
+        if (d.data.description) {
+          svg.select(".tooltip").remove();
+        }
+      })
       .each(function () {
         if (!hasProjectedDescendant(d.data, projectionList) && !hasSpecialNode(d.data) && projectionList.length > 0 && d.children) {
           d.data.collapsed = true;
@@ -294,8 +381,6 @@ export function drawDSTree(gElement: SVGGElement, projectionList: string[] = [],
               .attr("transform", scale !== 1 ? `scale(${scale})` : null);
           }
         }
-
-
       });
     
 
