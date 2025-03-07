@@ -141,7 +141,7 @@
         },
         {
           "name": "Position",
-          "description": "Dependencies are indicated by the relative position of marks. Must indicate dependency beyond track hierarchy.",
+          "description": "Dependencies are indicated SOLELY by the relative position of marks. Must indicate dependency beyond track hierarchy.",
           "logicalOperators": [
             "OR"
           ],
