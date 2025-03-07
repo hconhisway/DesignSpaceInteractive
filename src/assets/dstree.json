@@ -1,5 +1,6 @@
 {
   "name": "Gantts",
+  "description": "Gantt charts!",
   "logicalOperators": [
     "AND",
     "AND"
@@ -8,6 +9,7 @@
   "children": [
     {
       "name": "Duration Encoded along Timelines",
+      "description": "Data marks can encode duration along timelines, (implies the existence of a timeline axis).",
       "logicalOperators": [
         "AND"
       ],
@@ -15,6 +17,7 @@
       "children": [
         {
           "name": "Duration-encoding marks",
+          "description": "Marks that encode duration.",
           "logicalOperators": [
             "OR",
             "OR",
@@ -25,17 +28,19 @@
           "children": [
             {
               "name": "Bars",
-              "description": "Rectangles encoding time by length. Lines are included?",
+              "description": "Rectangles/Lines encoding time by length.",
               "logicalOperators": [
                 "OR"
               ],
               "sum": "LESS",
               "children": [
                 {
-                  "name": "Height encoded"
+                  "name": "Height encoded",
+                  "description": "The height of the bar is utilized to encode something else."
                 },
                 {
-                  "name": "Height unencoded"
+                  "name": "Height unencoded",
+                  "description": "The height of the bar is NOT utilized to encode something else."
                 }
               ]
             },
@@ -48,9 +53,6 @@
               "description": "Sparkline-style area chart where one axis encodes duration. The area can encode something else."
             },
             {
-              "name": "Lines"
-            },
-            {
               "name": "Springs",
               "description": "Spring-line or wave-like marks. Period may encode something else."
             }
@@ -58,6 +60,7 @@
         },
         {
           "name": "Time axis",
+          "description": "There exists a time axis.",
           "logicalOperators": [
             "AND"
           ],
@@ -93,8 +96,8 @@
               "sum": "EQUAL",
               "children": [
                 {
-                  "name": "Continuous Time",
-                  "description": "Represents a physically measured time. RENAME to Physical Time."
+                  "name": "Physical Time",
+                  "description": "Represents a physically measured, often continous time."
                 },
                 {
                   "name": "Derived Time",
@@ -111,6 +114,7 @@
     },
     {
       "name": "Cross-track Dependencies",
+      "description": "Can have dependencies between data blocks or tracks.",
       "children": [
         {
           "name": "Connection (lines)",
@@ -137,6 +141,7 @@
         },
         {
           "name": "Position",
+          "description": "Dependencies are indicated by the relative position of marks. Must indicate dependency beyond track hierarchy.",
           "logicalOperators": [
             "OR"
           ],
@@ -154,6 +159,7 @@
         },
         {
           "name": "Colors",
+          "description": "Dependencies are indicated by color.",
           "logicalOperators": [
             "OR"
           ],
@@ -174,6 +180,7 @@
     },
     {
       "name": "Discrete Tracks",
+      "description": "Has one axis with discrete tracks, partitioning data marks.",
       "logicalOperators": [
         "AND",
         "AND"
@@ -182,6 +189,7 @@
       "children": [
         {
           "name": "Hierarchy",
+          "description": "How tracks form hierarchy in relation to each other.",
           "logicalOperators": [
             "OR"
           ],
@@ -232,6 +240,7 @@
         },
         {
           "name": "Arrangement",
+          "description": "How tracks are arranged in relation to each other.",
           "logicalOperators": [
             "OR"
           ],
@@ -393,6 +402,7 @@
         },
         {
           "name": "Size distribution",
+          "description": "How tracks are distributed in terms of space size.",
           "logicalOperators": [
             "OR"
           ],
