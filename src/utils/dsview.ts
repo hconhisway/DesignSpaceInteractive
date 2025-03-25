@@ -355,8 +355,8 @@ export function drawDSTree(gElement: SVGGElement, projectionList: string[] = [],
               .attr("y", bbox.y)
               .attr("width", bbox.width)
               .attr("height", bbox.height)
-              .attr("fill", "#E45756")
-              .attr("stroke", "#E45756")
+              .attr("fill", "#86BA80")
+              .attr("stroke", "#86BA80")
               .attr("transform", scale !== 1 ? `scale(${scale})` : null);
           }
         }
@@ -376,8 +376,8 @@ export function drawDSTree(gElement: SVGGElement, projectionList: string[] = [],
               .attr("y", bbox.y)
               .attr("width", bbox.width)
               .attr("height", bbox.height)
-              .attr("fill", "#86BA80")
-              .attr("stroke", "#86BA80")
+              .attr("fill", "#D9D9D9")
+              .attr("stroke", "#D9D9D9")
               .attr("transform", scale !== 1 ? `scale(${scale})` : null);
           }
         }
@@ -479,17 +479,37 @@ export function drawDSTree(gElement: SVGGElement, projectionList: string[] = [],
           g.select(".right-line").attr("d", null);
         }
     
-        // 更新节点文本缩放
+        // 更新节点文本缩放及背景矩形更新
         g.select(".node-text")
           .each(function() {
             const text = this as SVGTextElement;
             text.removeAttribute('transform');
             const textLength = text.getBBox().width;
+            const parent = text.parentNode;
             if (textLength > width * 0.75) {
               const scale = (width * 0.75) / textLength;
+              if (parent) {
+                const rect = parent.querySelector('.node-text-rect') as SVGRectElement;
+                if (rect) {
+                  // const bbox = text.getBBox();
+                  // console.log(bbox);
+                  // rect.setAttribute('x', bbox.x.toString());
+                  // rect.setAttribute('y', bbox.y.toString());
+                  rect.setAttribute('transform', `scale(${scale})`);
+                  // rect.setAttribute('height', bbox.height.toString());
+                }
+              }
               text.setAttribute('transform', `scale(${scale})`);
+            } else {
+              if (parent) {
+                const rect = parent.querySelector('.node-text-rect') as SVGRectElement;
+                if (rect) {
+                  rect.removeAttribute('transform');
+                }
+              }
             }
           });
+
         
       });
 

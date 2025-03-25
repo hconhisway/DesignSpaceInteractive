@@ -72,7 +72,7 @@
                 "OR",
                 "OR"
               ],
-              "sum": "EQUAL",
+              "sum": "None",
               "children": [
                 {
                   "name": "Vertical",
