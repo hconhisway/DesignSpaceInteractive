@@ -132,6 +132,10 @@
               "description": "Arrowheads are present on connective lines to indcate direction."
             },
             {
+              "name": "Edge bundling",
+              "description": "Connection lines may use the node-link diagram technique of edge bundling."
+            },
+            {
               "name": "Width",
               "displayName": "Width encoding",
               "description": "Width indicates something intrinsic to the dependency, such as direction.",
