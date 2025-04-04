@@ -68,6 +68,7 @@
           "children": [
             {
               "name": "Orientation",
+	      "description": "The orientation/direction of the time axis.",
               "logicalOperators": [
                 "OR",
                 "OR"
@@ -90,6 +91,7 @@
             },
             {
               "name": "Time type",
+	      "description": "Meaning of time represented on the axis.",
               "logicalOperators": [
                 "OR"
               ],
@@ -104,9 +106,6 @@
                   "description": "Represents a derived form of time, such as logical time."
                 }
               ]
-            },
-            {
-              "name": "Ticks"
             }
           ]
         }
@@ -268,12 +267,14 @@
                   "sum": "None",
                   "children": [
                     {
-                      "name": "TO-Unsorted",
-                      "displayName": "Unsorted"
+                      "name": "TO-Arbitrary",
+                      "displayName": "Arbitrary",
+		      "description": "Order of tracks is arbitrary or otherwise unknown."
                     },
                     {
                       "name": "TO-Sorted",
                       "displayName": "Sorted",
+		      "description": "Order of tracks is sorted in some discernable fashion.",
                       "logicalOperators": [
                         "OR"
                       ],
@@ -282,6 +283,7 @@
                         {
                           "name": "TO-Derived",
                           "displayName": "Derived",
+			  "description": "Order of tracks has been derived from the data.",
                           "logicalOperators": [
                             "OR"
                           ],
@@ -302,6 +304,7 @@
                         {
                           "name": "TO-Intrinsic",
                           "displayName": "Intrinsic",
+			  "description": "Order of tracks is intrinsic to the data.",
                           "logicalOperators": [
                             "OR"
                           ],
@@ -337,12 +340,14 @@
                   "sum": "None",
                   "children": [
                     {
-                      "name": "2D-Unsorted",
-                      "displayName": "Unsorted"
+                      "name": "2D-Arbitrary",
+                      "displayName": "Arbitrary",
+		      "description": "Arrangement of tracks is arbitrary or otherwise unknown."
                     },
                     {
                       "name": "2D-Sorted",
-                      "displayName": "Sorted",
+                      "displayName": "Arranged",
+		      "description": "Arrangement of tracks is sorted in some discernable fashion.",
                       "logicalOperators": [
                         "OR"
                       ],
@@ -351,6 +356,7 @@
                         {
                           "name": "2D-Derived",
                           "displayName": "Derived",
+			  "description": "Arrangement of tracks has been derived from the data.",
                           "logicalOperators": [
                             "OR"
                           ],
@@ -358,17 +364,20 @@
                           "children": [
                             {
                               "name": "2D-initial start",
-                              "displayName": "initial start"
+                              "displayName": "initial start",
+                              "description": "Tracks are organized in order of their first event."
                             },
                             {
                               "name": "2D-highest time span",
-                              "displayName": "highest time span"
+                              "displayName": "highest time span",
+                              "description": "Tracks are organized in order of which has the longest time span overall."
                             }
                           ]
                         },
                         {
                           "name": "2D-Intrinsic",
                           "displayName": "Intrinsic",
+			  "description": "Arrangement of tracks is intrinsic to the data.",
                           "logicalOperators": [
                             "OR"
                           ],
@@ -376,22 +385,31 @@
                           "children": [
                             {
                               "name": "2D-Alphabetical",
-                              "displayName": "Alphabetical"
+                              "displayName": "Alphabetical",
+                              "description": "Tracks are ordered alphabetically by some ID/name attribute."
                             },
                             {
                               "name": "2D-ID",
-                              "displayName": "ID"
-                            },
-                            {
-                              "name": "2D-Circular",
-                              "displayName": "Circular"
+                              "displayName": "ID",
+                              "description": "Tracks are ordered by some ID attribute."
                             },
                             {
                               "name": "2D-Geographical",
-                              "displayName": "Geographical"
+                              "displayName": "Geographical",
+			      "description": "Tracks are placed by geographical attributes."
+                            },
+                            {
+                              "name": "2D-Mixed",
+                              "displayName": "Mixed",
+                              "descripton": "Tracks are ordered using several indicators."
                             }
                           ]
-                        }
+                        },
+			{
+			  "name": "2D-Circular",
+			  "displayName": "Circular",
+			  "description": "Tracks are arranged in a circular fashion."
+			}
                       ]
                     }
                   ]
